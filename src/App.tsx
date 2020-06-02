@@ -12,7 +12,28 @@ const AppContainer = styled.div`
 function App() {
   return (
     <AppContainer>
-      <Crossword />
+      <Crossword 
+        inputString={
+          //sorry this is horrible it will be generated usually
+          // 0 for input 1 for black box
+           '000000000000000'
+          +'000000000000000'
+          +'000010000000000'
+          +'000010000000000'
+          +'000010000000000'
+          +'000000000000000'
+          +'000001000000000'
+          +'000001000000000'
+          +'000000000010000'
+          +'000000000010000'
+          +'000000000010000'
+          +'000000000010000'
+          +'000000000000000'
+          +'000000000000000'
+          +'000000000000000'
+        } 
+        
+      />
     </AppContainer>
   );
 }
