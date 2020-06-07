@@ -1,5 +1,7 @@
-import React, { useReducer, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+import {EditorState, EditorActions} from "./Editor";
+import {SolverState, SolverActions} from "./Solver";
 
 const CrosswordContainer = styled.div`
   display: grid;
@@ -31,69 +33,20 @@ const SquareInput = styled.input<InputCSSProps>`
     background-color: ${(props) => (props.blackSquare ? "black" : "#aaaaff")};
   }
 `;
-interface Props {
-  inputString: string;
-}
-
-interface State {
-  chars: string[];
-  lastChanged: number;
-}
-
-const initialState: State = {
-  chars: new Array(15 * 15).fill(""),
-  lastChanged: 0,
-};
-
-type Actions =
-  | {
-      type: "SET_LETTER";
-      payload: { index: number; newVal: string };
-    }
-  | {
-      type: "TOGGLE_BLACK_SPACE";
-      index: number;
-    };
-
-function reducer(state: State, action: Actions) {
-  switch (action.type) {
-    case "SET_LETTER":
-      const { index, newVal } = action.payload;
-      return {
-        ...state,
-        lastChanged: index,
-        chars: state.chars.map((elem, i) => (i === index ? newVal : elem)),
-      };
-    case "TOGGLE_BLACK_SPACE":
-      return {
-        ...state,
-        lastChanged: action.index,
-        chars: state.chars.map((elem, i) => {
-          if(i === action.index || i === (15*15-1 - action.index)){
-            return elem === "."? "" : ".";
-          }
-          return elem;
-        }),
-      };
-    default:
-      throw new Error();
-  }
+type Props = {
+  state: EditorState,
+  dispatch: React.Dispatch<EditorActions>,
+  isEditable: true
+} | {
+  state: SolverState,
+  dispatch: React.Dispatch<SolverActions>,
+  isEditable: false
 }
 
 export const Crossword: React.FC<Props> = (props) => {
-  /* const { inputString } = props;
+  const { state, dispatch, isEditable } = props;
 
-  if (inputString.length !== 15 * 15) {
-    throw new Error(
-      `input string is not the correct length it is ${
-        inputString.length
-      } instead of ${15 * 15} characters`
-    );
-  } */
-
-  const [state, dispatch] = useReducer(reducer, initialState);
   const [isDown, setIsDown] = useState(true);
-  const isEditable = true;
 
   const getNextBox = (i: number): number => {
     const across = i < metaData.length - 1 ? i + 1 : i;
@@ -102,8 +55,6 @@ export const Crossword: React.FC<Props> = (props) => {
   };
 
   const metaData =
-    /* inputString
-    .split("") */
     state.chars.map((char) => ({
       character: char,
       ref: React.createRef<HTMLInputElement>(),
@@ -132,7 +83,7 @@ export const Crossword: React.FC<Props> = (props) => {
           if (e.target.value.match(`[a-zA-Z${isEditable && "."}]`)) {
             (metaData[getNextBox(i)].ref.current as HTMLElement)?.focus();
             if (isEditable && e.target.value === ".") {
-              dispatch({
+              (dispatch as React.Dispatch<EditorActions>)({
                 type: "TOGGLE_BLACK_SPACE",
                 index: i
               });
@@ -155,6 +106,7 @@ export const Crossword: React.FC<Props> = (props) => {
   return (
     <>
       <CrosswordContainer {...props}>{inputs}</CrosswordContainer>
+      <button onClick={() => dispatch({type: "RESET"})}>Reset</button>
       <h3>{isDown ? "Down" : "Across"}</h3>
       <h3>
         {`index:${state.lastChanged} row:${Math.floor(
@@ -162,7 +114,9 @@ export const Crossword: React.FC<Props> = (props) => {
         )} col:${state.lastChanged % 15}`}
       </h3>
       <p>Use the space bar to toggle direction.</p>
-      <p>Use . to toggle a black square</p>
+      {isEditable && <p>Use . to toggle a black square</p>}
     </>
   );
 };
+
+export default Crossword

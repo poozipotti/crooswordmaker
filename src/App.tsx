@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled from 'styled-components'
-import {Crossword} from './components/Crossword/Crossword';
+import {Editor} from './components/Crossword/Editor';
+import {Solver} from './components/Crossword/Solver';
 
 const AppContainer = styled.div`
     margin:0;
@@ -10,30 +11,11 @@ const AppContainer = styled.div`
 `
 
 function App() {
+  const [isEditing, setIsEditing] = useState<boolean>(true);
   return (
     <AppContainer>
-      <Crossword 
-        inputString={
-          //sorry this is horrible it will be generated usually
-          // 0 for input 1 for black box
-           '000000000000000'
-          +'000000000000000'
-          +'000010000000000'
-          +'000010000000000'
-          +'000010000000000'
-          +'000000000000000'
-          +'000001000000000'
-          +'000001000000000'
-          +'000000000010000'
-          +'000000000010000'
-          +'000000000010000'
-          +'000000000010000'
-          +'000000000000000'
-          +'000000000000000'
-          +'000000000000000'
-        } 
-        
-      />
+      {isEditing ? <Editor/> : <Solver/>}
+    <button onClick={(): void => setIsEditing(!isEditing)}>Click to {isEditing? "solve" : "create"} a puzzle!</button>
     </AppContainer>
   );
 }
