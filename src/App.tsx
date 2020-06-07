@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components'
-import {Crossword} from './components/Crossword/Crossworld';
+import {Crossword} from './components/Crossword/Crossword';
 
 const AppContainer = styled.div`
     margin:0;
