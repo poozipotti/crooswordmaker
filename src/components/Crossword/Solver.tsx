@@ -1,13 +1,13 @@
 import React, { useReducer } from "react";
-import Crossword from "./Crossword";
+import Crossword, { Box }  from "./Crossword";
 
 export interface SolverState {
-  chars: string[];
+  boxes: Box[];
   lastChanged: number;
 }
 
 const initialState: SolverState = {
-  chars: new Array(15 * 15).fill(""),
+  boxes: new Array(15 * 15).fill(""),
   lastChanged: 0,
 };
 
@@ -27,7 +27,7 @@ function reducer(state: SolverState, action: SolverActions) {
       return {
         ...state,
         lastChanged: index,
-        chars: state.chars.map((elem, i) => (i === index ? newVal : elem)),
+        boxes: state.boxes.map((elem, i) => (i === index ? {...elem, char: newVal} : elem)),
       };
     case "RESET":
       return initialState;
