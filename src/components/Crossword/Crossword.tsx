@@ -6,6 +6,20 @@ import { SolverState, SolverActions } from "./Solver";
 export type Box = {
   char: string;
   label: number | undefined;
+  wordAcrossLabel?: number;
+  wordDownLabel?: number;
+}
+
+export enum WordDirection {
+  down, 
+  across
+}
+
+export type Word = {
+  label: number;
+  direction: WordDirection;
+  word: string;
+  hint: string;
 }
 
 const CrosswordContainer = styled.div`

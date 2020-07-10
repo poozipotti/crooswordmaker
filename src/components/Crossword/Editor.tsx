@@ -1,9 +1,10 @@
 import React, { useReducer } from "react";
-import Crossword, { Box } from "./Crossword";
+import Crossword, { Box, Word } from "./Crossword";
 
 export interface EditorState {
   boxes: Box[];
   lastChanged: number;
+  words: Word[];
 }
 
 const initialState: EditorState = {
@@ -18,6 +19,7 @@ const initialState: EditorState = {
       return elem;
     }),
   lastChanged: 0,
+  words: [],
 };
 
 export type EditorActions =
@@ -64,7 +66,7 @@ function reducer(state: EditorState, action: EditorActions) {
       throw new Error();
   }
 }
- 
+
 const updateLabels = (boxes: Box[]) => {
   let count = 1;
   return boxes.map((elem, i) => (
@@ -76,7 +78,7 @@ const updateLabels = (boxes: Box[]) => {
       ? { ...elem, label: count++ }
       : { ...elem, label: undefined }
   ));
-}; 
+};
 
 export const Editor: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
