@@ -8,19 +8,21 @@ export type Box = {
   label: number | undefined;
   wordAcrossLabel?: number;
   wordDownLabel?: number;
-}
+};
 
 export enum WordDirection {
-  down, 
+  down,
   across
 }
 
-export type Word = {
-  label: number;
-  direction: WordDirection;
-  word: string;
-  hint: string;
+export interface Questions {
+  [questionNumber: number]: Question
 }
+
+export type Question = {
+  down: undefined | string
+  across: undefined | string
+};
 
 const CrosswordContainer = styled.div`
   display: grid;
@@ -45,7 +47,7 @@ const SquareInput = styled.input<InputCSSProps>`
   border: 1px solid black;
   height: 30px;
   width: 30px;
-  background-color: ${(props) => (props.blackSquare ? "black" : "white")};
+  background-color: ${props => (props.blackSquare ? "black" : "white")};
   font-size: 1rem;
   display: flex;
   justify-self: center;
@@ -53,7 +55,7 @@ const SquareInput = styled.input<InputCSSProps>`
   text-align: center;
   color: black;
   &:hover {
-    background-color: ${(props) => (props.blackSquare ? "black" : "#aaaaff")};
+    background-color: ${props => (props.blackSquare ? "black" : "#aaaaff")};
   }
 `;
 
@@ -77,7 +79,7 @@ type Props =
       isEditable: false;
     };
 
-export const Crossword: React.FC<Props> = (props) => {
+export const Crossword: React.FC<Props> = props => {
   const { state, dispatch, isEditable } = props;
 
   const [isDown, setIsDown] = useState(true);
@@ -88,9 +90,9 @@ export const Crossword: React.FC<Props> = (props) => {
     return isDown ? down : across;
   };
 
-  const metaData = state.boxes.map((box) => ({
+  const metaData = state.boxes.map(box => ({
     character: box.char,
-    ref: React.createRef<HTMLInputElement>(),
+    ref: React.createRef<HTMLInputElement>()
   }));
 
   const inputs = metaData.map((meta, i) => {
@@ -104,34 +106,34 @@ export const Crossword: React.FC<Props> = (props) => {
           maxLength={1}
           value={state.boxes[i].char === "." ? "" : state.boxes[i].char}
           ref={ref}
-          onFocus={(e) => {
+          onFocus={e => {
             e.target.select();
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.keyCode === 32) {
               e.preventDefault();
-              setIsDown((state) => !state);
+              setIsDown(state => !state);
             }
           }}
-          onChange={(e) => {
+          onChange={e => {
             e.preventDefault();
             if (e.target.value.match(`[a-zA-Z${isEditable && "."}]`)) {
               (metaData[getNextBox(i)].ref.current as HTMLElement)?.focus();
               if (isEditable && e.target.value === ".") {
                 (dispatch as React.Dispatch<EditorActions>)({
                   type: "TOGGLE_BLACK_SPACE",
-                  index: i,
+                  index: i
                 });
                 return;
               }
               dispatch({
                 type: "SET_LETTER",
-                payload: { index: i, newVal: e.target.value.toUpperCase() },
+                payload: { index: i, newVal: e.target.value.toUpperCase() }
               });
             } else if (e.target.value === "") {
               dispatch({
                 type: "SET_LETTER",
-                payload: { index: i, newVal: e.target.value.toUpperCase() },
+                payload: { index: i, newVal: e.target.value.toUpperCase() }
               });
             }
           }}
