@@ -1,5 +1,5 @@
 import React, { useReducer } from "react";
-import Crossword, { Box, Questions } from "./Crossword";
+import Crossword, { Box, Questions, Question } from "./Crossword";
 
 export interface EditorState {
   boxes: Box[];
@@ -7,19 +7,41 @@ export interface EditorState {
   questions: Questions;
 }
 
+const initialBoxes = () =>
+  new Array(15 * 15).fill({ char: "", label: undefined }).map((elem, i) => {
+    if (i < 15) {
+      return { ...elem, label: i + 1 };
+    } else if (i % 15 === 0) {
+      return { ...elem, label: i / 15 + 15 };
+    }
+    return elem;
+  });
+const getQuestions = (boxes: Box[], questions: Questions) => {
+  return boxes.reduce(
+    (questionMap, elem, i) =>
+      elem.label
+        ? {
+            ...questionMap,
+            [elem.label]: {
+              down:
+                i < 15 || boxes[i - 15].char === "."
+                  ? questions[elem.label]?.down || ""
+                  : undefined,
+              across:
+                i % 15 === 0 || boxes[i - 1].char === "."
+                  ? questions[elem.label]?.across || ""
+                  : undefined
+            }
+          }
+        : questionMap,
+    {}
+  );
+};
+
 const initialState: EditorState = {
-  boxes: new Array(15 * 15)
-    .fill({ char: "", label: undefined })
-    .map((elem, i) => {
-      if (i < 15) {
-        return { ...elem, label: i + 1 };
-      } else if (i % 15 === 0) {
-        return { ...elem, label: i / 15 + 15 };
-      }
-      return elem;
-    }),
+  boxes: initialBoxes(),
   lastChanged: 0,
-  questions: {}
+  questions: getQuestions(initialBoxes(), {})
 };
 
 export type EditorActions =
@@ -33,9 +55,13 @@ export type EditorActions =
     }
   | {
       type: "RESET";
+    }
+  | {
+      type: "UPDATE_QUESTION";
+      payload: { [questionNumber: number]: Question };
     };
 
-function reducer(state: EditorState, action: EditorActions) {
+const reducer = (state: EditorState, action: EditorActions) => {
   switch (action.type) {
     case "SET_LETTER":
       const { index, newVal } = action.payload;
@@ -64,10 +90,15 @@ function reducer(state: EditorState, action: EditorActions) {
       };
     case "RESET":
       return initialState;
+    case "UPDATE_QUESTION":
+      return {
+        ...state,
+        questions: { ...state.questions, ...action.payload }
+      };
     default:
       throw new Error();
   }
-}
+};
 
 const updateLabels = (boxes: Box[]) => {
   let count = 1;
@@ -82,53 +113,63 @@ const updateLabels = (boxes: Box[]) => {
   );
 };
 
-const getQuestions = (boxes: Box[], questions: Questions) => {
-  return boxes.reduce(
-    (questionMap, elem, i) =>
-      elem.label
-        ? {
-            ...questionMap,
-            [elem.label]: {
-              down:
-                i < 15 || boxes[i - 15].char === "."
-                  ? /*questions[elem.label]?.down ||*/ `${
-                      15 - Math.floor(i / 15)
-                    }`
-                  : undefined,
-              across:
-                i % 15 === 0 || boxes[i - 1].char === "."
-                  ? /*questions[elem.label]?.across ||*/ 15 - (i % 15)
-                  : undefined
+const QuestionContainer: React.FC<{
+  question: Questions;
+  across: boolean;
+  dispatch: React.Dispatch<EditorActions>;
+}> = ({ question, across, dispatch }) => {
+  const [questionNumber, fullQuestion] = Object.entries(question)[0];
+  const questionText =
+    across ? fullQuestion.accross : fullQuestion.down;
+  return (
+    <div style={{ display: "flex", width: "100%" }}>
+      <div style={{ width: "2rem" }}>{questionNumber}</div>
+      <input
+        value={questionText}
+        onChange={e => {
+          dispatch({
+            type: "UPDATE_QUESTION",
+            payload: {
+              [questionNumber]: {
+                across: across ? e.target.value : fullQuestion.across,
+                down: !across ? e.target.value : fullQuestion.down
+              }
             }
-          }
-        : questionMap,
-    {}
+          });
+        }}
+      />
+    </div>
   );
 };
 
-const QuestionContainer: React.FC<{ questions: Questions }> = ({
-  questions
-}) => (
+const QuestionsContainer: React.FC<{
+  questions: Questions;
+  dispatch: React.Dispatch<EditorActions>;
+}> = ({ questions, dispatch }) => (
   <div style={{ height: "70vh", overflow: "scroll" }}>
     <h1> Questions</h1>
     <h2> across </h2>
     <div>
       {Object.entries(questions)
-        .filter(([, question]) => question.across)
+        .filter(([, question]) => question.across !== undefined)
         .map(([questionNumber, question]) => (
-          <div key={`A${questionNumber}`}>{`${questionNumber}. ${
-            question.across || ""
-          }?`}</div>
+          <QuestionContainer
+            across={true}
+            question={{ [questionNumber]: question }}
+            dispatch={dispatch}
+          />
         ))}
     </div>
     <h2> down </h2>
     <div>
       {Object.entries(questions)
-        .filter(([, question]) => question.down)
+        .filter(([, question]) => question.down !== undefined)
         .map(([questionNumber, question]) => (
-          <div key={`D${questionNumber}`}>{`${questionNumber}. ${
-            question.down || ""
-          }?`}</div>
+          <QuestionContainer
+            across={false}
+            question={{ [questionNumber]: question }}
+            dispatch={dispatch}
+          />
         ))}
     </div>
   </div>
@@ -139,7 +180,7 @@ export const Editor: React.FC = () => {
 
   return (
     <div style={{ display: "grid", gridTemplate: "1fr / 1fr 2fr" }}>
-      <QuestionContainer questions={state.questions} />
+      <QuestionsContainer questions={state.questions} dispatch={dispatch} />
       <Crossword state={state} dispatch={dispatch} isEditable={true} />
       <div></div>
       <button>Save Puzzle</button>
